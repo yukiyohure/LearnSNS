@@ -1,4 +1,7 @@
 <?php 
+//セッション変数を使いたいファイルの一番最初に
+session_start();
+
 //エラーの種類を保存しておくエラー変数を定義
 $errors = array();
 
@@ -42,6 +45,29 @@ if (!empty($_POST)) {
     }else{
       //空の時
       $errors["img_name"] = "blank";
+    }
+
+
+    //エラーがない場合、正常処理
+    if(empty($errors)){
+      //アップロード用のファイルを作成
+      $date_str = date("YmdHis");
+      $submit_file_name = $date_str.$file_name;
+
+      //ファイルのアップロード
+      move_uploaded_file($_FILES["input_img_name"]["tmp_name"],"../user_profile_img/".$submit_file_name);
+
+      //SESSION変数に保存
+      $_SESSION["register"]["name"] = $name;
+      $_SESSION["register"]["email"] = $email;
+      $_SESSION["register"]["password"] = $password;
+
+      $_SESSION["register"]["img_name"] = $submit_file_name;
+
+      //check.phpに移動
+      header('Location:check.php');
+      //ここで処理を中断する
+      exit();
     }
 
 }
