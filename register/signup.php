@@ -1,16 +1,31 @@
 <?php 
 //セッション変数を使いたいファイルの一番最初に
 session_start();
+$errors = array();
+//書き直しの処理
+//check.phpから「戻る」ボタンが押された時
+//$_REQUEST GET送信、POST送信されたデータが格納されている変数
+//$_GET GET送信されたデータが格納されてる変数
+if (isset($_REQUEST["action"]) && $_REQUEST["action"] == "rewrite") {
+  $_POST["input_name"] = $_SESSION["register"]["name"];
+  $_POST["input_email"] = $_SESSION["register"]["email"];
+  $_POST["input_password"] = $_SESSION["register"]["password"];
+
+  $errors["rewrite"] = true;
+}
 
 //エラーの種類を保存しておくエラー変数を定義
-$errors = array();
+// $errors = array();
+$name = '';
+$email = '';
+$password = '';
+
 
 //POST送信されたデータがある場合
 if (!empty($_POST)) {
   $name = $_POST["input_name"];
   $email = $_POST["input_email"];
   $password = $_POST["input_password"];
-
   $count = strlen($password);//変数の中に何文字保存されているか取得する
 
   //ユーザー名のテェック
@@ -18,7 +33,7 @@ if (!empty($_POST)) {
     $errors["name"] = "blank";
   }
 
-  //メールアドレスのテェック
+  //Emailのチェック
   if ($email=='') {
     $errors["email"] = "blank";
   }
@@ -32,7 +47,11 @@ if (!empty($_POST)) {
   }
 
   //画像のテェック
-  $file_name = $_FILES["input_img_name"]["name"];
+  $file_name = '';//常に存在するように空文字を最初に代入
+  if (!isset($_REQUEST["action"])) {
+    $file_name = $_FILES["input_img_name"]["name"];
+  }
+  // $file_name = $_FILES["input_img_name"]["name"];
   // var_dump($file_name);
   if (!empty($file_name)) {
     //拡張子テェックの処理
@@ -95,7 +114,7 @@ if (!empty($_POST)) {
         <form method="POST" action="signup.php" enctype="multipart/form-data">
           <div class="form-group">
             <label for="name">ユーザー名</label>
-            <input type="text" name="input_name" class="form-control" id="name" placeholder="山田 太郎">
+            <input type="text" name="input_name" class="form-control" id="name" placeholder="山田 太郎" value="<?php echo $name; ?>">
             <?php if((isset($errors["name"])) && ($errors["name"]=='blank')){ ?>
 
               <p class="text-danger">ユーザー名を入力してください</p>
@@ -104,14 +123,14 @@ if (!empty($_POST)) {
           </div>
           <div class="form-group">
             <label for="email">メールアドレス</label>
-            <input type="email" name="input_email" class="form-control" id="email" placeholder="example@gmail.com">
+            <input type="email" name="input_email" class="form-control" id="email" placeholder="example@gmail.com" value="<?php echo $email; ?>">
             <?php if((isset($errors["email"])) && ($errors["email"]=='blank')){ ?>
               <p class="text-danger">メールアドレスを入力してください</p>
             <?php } ?>
           </div>
           <div class="form-group">
             <label for="password">パスワード</label>
-            <input type="password" name="input_password" class="form-control" id="password" placeholder="4 ~ 16文字のパスワード">
+            <input type="password" name="input_password" class="form-control" id="password" placeholder="4 ~ 16文字のパスワード" value="<?php echo $password; ?>">
             <?php if((isset($errors["password"])) && ($errors["password"]=='blank')){ ?>
             <p class="text-danger">パスワードを入力してください</p>
             <?php } ?>
@@ -122,6 +141,10 @@ if (!empty($_POST)) {
           <div class="form-group">
             <label for="img_name">プロフィール画像</label>
             <input type="file" name="input_img_name" id="img_name">
+            <?php if((isset($errors["rewrite"])) && ($errors["rewrite"]=='true')){ ?>
+            <p class="text-danger">画像は再選択する必要があります</p>
+            <?php } ?>
+
             <?php if((isset($errors["img_name"])) && ($errors["img_name"]=='blank')){ ?>
             <p class="text-danger">画像を選択してください</p>
             <?php } ?>
