@@ -36,6 +36,23 @@ if (!empty($_POST)) {
   //Emailのチェック
   if ($email=='') {
     $errors["email"] = "blank";
+  }else{
+    //重複エラーチェック
+    //DBに接続
+    require("../dbconnect.php");
+    //入力されたemailと合致するデータの件数を取得
+    $sql = "SELECT COUNT(*) as `cnt` FROM `users` WHERE `email` = ?";
+    $data = array($email);
+    $stmt = $dbh -> prepare($sql);
+    $stmt -> execute($data);
+
+    $rec = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    //1件以上であれば、重複エラーの印を保存
+      if ($rec["cnt"] > 0) {
+        $errors["email"] = "deplicate";
+      }
+
   }
 
   //パスワードのテェック
@@ -126,6 +143,9 @@ if (!empty($_POST)) {
             <input type="email" name="input_email" class="form-control" id="email" placeholder="example@gmail.com" value="<?php echo $email; ?>">
             <?php if((isset($errors["email"])) && ($errors["email"]=='blank')){ ?>
               <p class="text-danger">メールアドレスを入力してください</p>
+            <?php } ?>
+            <?php if((isset($errors["email"])) && ($errors["email"]=='deplicate')){ ?>
+              <p class="text-danger">入力されたメールアドレスは既に使用されています</p>
             <?php } ?>
           </div>
           <div class="form-group">
