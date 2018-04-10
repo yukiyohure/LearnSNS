@@ -15,12 +15,18 @@
             </div>
             <div class="row feed_sub">
               <div class="col-xs-12">
-                <form method="POST" action="" style="display: inline;">
-                  <input type="hidden" name="feed_id" >
-                    <input type="hidden" name="like" value="like">
-                    <button type="submit" class="btn btn-default btn-xs"><i class="fa fa-thumbs-up" aria-hidden="true"></i>いいね！</button>
-                </form>
-                <span class="like_count">いいね数 : 100</span>
+                <?php if($timeline_each["like_flag"] == 0){ ?>
+                    <a href="like.php?feed_id=<?php echo $timeline_each["id"]; ?>">
+                      <button type="button" class="btn btn-default btn-xs"><i class="fa fa-thumbs-up" aria-hidden="true"></i>いいね！</button>
+                    </a>
+                <?php }else{ ?>
+                    <a href="unlike.php?feed_id=<?php echo $timeline_each["id"]; ?>">
+                      <button type="button" class="btn btn-info btn-xs"><i class="fa fa-thumbs-up" aria-hidden="true"></i>いいね！を取り消す</button>
+                    </a>
+                <?php } ?>
+                <?php if ($timeline_each["like_count"] > 0) { ?>
+                <span class="like_count">いいね数 : <?php echo $timeline_each["like_count"]; ?></span>
+                <?php } ?>
                 <span class="comment_count">コメント数 : 9</span>
                 <?php if ($_SESSION["id"] == $timeline_each["user_id"]){ ?>
                   <a href="#" class="btn btn-success btn-xs">編集</a>

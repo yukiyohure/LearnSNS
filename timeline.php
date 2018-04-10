@@ -1,7 +1,17 @@
 <?php
   session_start();
   // var_dump($_SESSION['id']);
+  //requireの名前はわかりやすくつける！
   require('dbconnect.php');
+  require('signin_check.php');
+
+  //
+  if (!isset($_SESSION['id'])) {
+    header("Location: signin.php");
+    exit();
+  }
+
+
   //ナビバーに表示するためログインユーザーの情報を取得
   $sql = 'SELECT * FROM `users` WHERE `id`='.$_SESSION['id'];
   $stmt = $dbh->prepare($sql);
@@ -26,9 +36,34 @@
     // $rec = array("id"=>1,"feed"=>"つぶやいた内容",,,,"created"=>"2018-03-03","updated"=>"2018-03-03")
     // テーブル結合後
     // $rec = array("id"=>1,"feed"=>"つぶやいた内容",,,,"created"=>"2018-03-03","updated"=>"2018-03-03","name"=>"demotarou","profile_image"=>"20180303010101test.png")
+
+    //テーブル結合後-ログインユーザーのライク状況を表す情報を追加
+    // $rec = array("id"=>1,"feed"=>"つぶやいた内容",,,,"created"=>"2018-03-03","updated"=>"2018-03-03","name"=>"demotarou","profile_image"=>"20180303010101test.png","like_flag"=>0)Likeしてない時
+
+    // $rec = array("id"=>1,"feed"=>"つぶやいた内容",,,,"created"=>"2018-03-03","updated"=>"2018-03-03","name"=>"demotarou","profile_image"=>"20180303010101test.png","like_flag"=>1)Likeした時
+
     if ($rec == false){
       break;
     }
+
+    //ログインユーザーが現在取得feedにlikeしているかどうかを取得
+    //$_SESSION["id"]:ログインしているユーザーID
+    //$rec["id"]:現在取得したfeedのID
+    $like_sql = "SELECT COUNT(*) as `cnt` FROM `likes` WHERE `feed_id` = ? AND `user_id` = ?";
+    $like_data = array($rec["id"],$_SESSION["id"]);
+    $like_stmt = $dbh->prepare($like_sql);
+    $like_stmt->execute($like_data);
+
+    $like_rec = $like_stmt->fetch(PDO::FETCH_ASSOC);
+
+    if($like_rec["cnt"] == 0){
+      //Likeしてない
+      $rec["like_flag"] = 0;
+    }else{
+      //Lke済み
+      $rec["like_flag"] = 1;
+    }
+
     $timeline[] = $rec;
   }
 ?>
