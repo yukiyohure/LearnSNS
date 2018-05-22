@@ -5,18 +5,13 @@
   require('dbconnect.php');
   require('signin_check.php');
 
-  //
-  if (!isset($_SESSION['id'])) {
-    header("Location: signin.php");
-    exit();
-  }
-
 
   //ナビバーに表示するためログインユーザーの情報を取得
   $sql = 'SELECT * FROM `users` WHERE `id`='.$_SESSION['id'];
   $stmt = $dbh->prepare($sql);
   $stmt->execute();
   $login_user = $stmt->fetch(PDO::FETCH_ASSOC);
+  
   //つぶやきを保存
   if (isset($_POST) && !empty($_POST)){
     $sql = 'INSERT INTO `feeds` SET `feed`=?, `user_id`=?, `created`=NOW()';
@@ -24,10 +19,58 @@
     $stmt = $dbh->prepare($sql);
     $stmt->execute($data);
   }
+
+//ページングの処理
+  $page = "";//ページ番号
+  $start = 0;// データの取得開始番号（LIMIT句の措定に使用）
+  $page_row = 3;// 1ページ分の表示件数
+
+//パラメータが存在していたらページ番号を代入
+  if(isset($_GET["page"])){
+    $page = $_GET["page"];
+  }else{
+    //存在しない場合は1ページ目とみなす
+    $page = 1;
+  }
+
+  //1以下のイレギュラーな数字が入ってきたときは強制的に1とします
+  //max：カンマ区切りで羅列された数字の中から最大の数字を取得
+  $page  = max($page,1);
+
+  //データの件数から最大ページ数を計算する
+  $sql_count = "SELECT COUNT(*) AS `cnt` FROM `feeds`";
+  $stmt_count = $dbh ->prepare($sql_count);
+  $stmt_count -> execute();
+
+
+  $rec_count = $stmt_count->fetch(PDO::FETCH_ASSOC);
+  //ceil関数：小数点の切り上げ
+  $all_page_number = ceil($rec_count['cnt'] / $page_row);
+
+  //ページ番号が最大ページの番号を超えていれば、強制的に最大のページ数にする
+  //min：カンマ区切りで羅列された数字の中から最小の数字を取得
+  $page = min($page,$all_page_number);
+
+  //開始番号の計算
+  $start = ($page - 1) * $page_row;
   //timelineの情報を取得
-  $sql = 'SELECT `feeds`.*,`users`.`name`,`users`.`img_name` as `profile_image` FROM `feeds` INNER JOIN `users` ON `feeds`.`user_id` = `users`.`id` ORDER BY `feeds`.`updated` DESC';
+    if(isset($_GET["search_word"]) && !empty($_GET["search_word"])){
+    //何か検索ワードで検索した時
+      $sql = 'SELECT `feeds`.*,`users`.`name`,`users`.`img_name` as `profile_image` FROM `feeds` INNER JOIN `users` ON `feeds`.`user_id` = `users`.`id` WHERE `feeds`.`feed` LIKE ? ORDER BY `feeds`.`updated` DESC';
+      $word = "%".$_GET["search_word"]."%";
+      $data = array($word);
+
+  }else{
+    //通常時
+    $sql = 'SELECT `feeds`.*,`users`.`name`,`users`.`img_name` as `profile_image` FROM `feeds` INNER JOIN `users` ON `feeds`.`user_id` = `users`.`id` ORDER BY `feeds`.`updated` DESC LIMIT '.$start.','.$page_row;
+
+    $data = array();
+  }
+  // var_dump($sql);
+
   $stmt = $dbh->prepare($sql);
-  $stmt->execute();
+  $stmt->execute($data);
+
   //表示部分で使用できるようにタイムラインの情報を格納する配列を用意
   $timeline = array();
   while (1) {
@@ -98,7 +141,7 @@
       <div class="collapse navbar-collapse" id="navbar-collapse1">
         <ul class="nav navbar-nav">
           <li class="active"><a href="#">タイムライン</a></li>
-          <li><a href="#">ユーザー一覧</a></li>
+          <li><a href="user_index.php">ユーザー一覧</a></li>
         </ul>
         <form method="GET" action="" class="navbar-form navbar-left" role="search">
           <div class="form-group">
@@ -152,8 +195,16 @@
           } ?>
         <nav aria-label="Page navigation">
           <ul class="pager">
-            <li class="previous disabled"><a href="#"><span aria-hidden="true">&larr;</span> Older</a></li>
-            <li class="next"><a href="#">Newer <span aria-hidden="true">&rarr;</span></a></li>
+            <?php if($page <= 1){ ?>
+            <li class="previous disabled"><a><span aria-hidden="true">&larr;</span> Older</a></li>
+            <?php }else{ ?>
+            <li class="previous"><a href="timeline.php?page=<?php echo $page - 1; ?>"><span aria-hidden="true">&larr;</span> Older</a></li>
+            <?php } ?>
+            <?php if($page >= $all_page_number){ ?><!-- "=="にするとユーザーに"page=100"とか入力されても飛べてしまう -->
+            <li class="next disabled"><a>Newer <span aria-hidden="true">&rarr;</span></a></li>
+            <?php }else{ ?>
+            <li class="next"><a href="timeline.php?page=<?php echo $page + 1; ?>">Newer <span aria-hidden="true">&rarr;</span></a></li>
+            <?php } ?>
           </ul>
         </nav>
       </div>

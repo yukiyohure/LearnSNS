@@ -1,11 +1,11 @@
 <?php 
-//セッション変数を使いたいファイルの一番最初に
+//セッション変数を使いたいファイルの一番最初に書く
 session_start();
-$errors = array();
+// $errors = array();
 //書き直しの処理
 //check.phpから「戻る」ボタンが押された時
-//$_REQUEST GET送信、POST送信されたデータが格納されている変数
-//$_GET GET送信されたデータが格納されてる変数
+//$_REQUEST:GET送信、POST送信されたデータが格納されている変数
+//$_GET:GET送信されたデータが格納されてる変数
 if (isset($_REQUEST["action"]) && $_REQUEST["action"] == "rewrite") {
   $_POST["input_name"] = $_SESSION["register"]["name"];
   $_POST["input_email"] = $_SESSION["register"]["email"];
@@ -15,7 +15,7 @@ if (isset($_REQUEST["action"]) && $_REQUEST["action"] == "rewrite") {
 }
 
 //エラーの種類を保存しておくエラー変数を定義
-// $errors = array();
+$errors = array();
 $name = '';
 $email = '';
 $password = '';
@@ -55,7 +55,7 @@ if (!empty($_POST)) {
 
   }
 
-  //パスワードのテェック
+  //パスワードのチェック
   if ($password == '') {
     $errors["password"] = "blank";
   }else if($count < 4 || $count > 16){
@@ -63,12 +63,12 @@ if (!empty($_POST)) {
     $errors["password"] = "length";
   }
 
-  //画像のテェック
-  $file_name = '';//常に存在するように空文字を最初に代入
+  //画像のチェック
+  $file_name = "";//常に存在するように空文字を最初に代入
   if (!isset($_REQUEST["action"])) {
     $file_name = $_FILES["input_img_name"]["name"];
   }
-  // $file_name = $_FILES["input_img_name"]["name"];
+  var_dump($file_name);
   // var_dump($file_name);
   if (!empty($file_name)) {
     //拡張子テェックの処理
@@ -83,7 +83,8 @@ if (!empty($_POST)) {
       $errors["img_name"] = "blank";
     }
 
-
+// var_dump($file_name);
+var_dump($errors);
     //エラーがない場合、正常処理
     if(empty($errors)){
       //アップロード用のファイルを作成
